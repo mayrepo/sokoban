@@ -15,7 +15,6 @@ use sdl2::render::Texture;
 //use std::env;
 use std::path::Path;
 
-
 fn render(
     canvas: &mut sdl2::render::Canvas<sdl2::video::Window>,
     state: &State,
@@ -73,7 +72,6 @@ fn render(
 
 pub struct Level {
     state: State,
-    render: dyn Fn(&State),
 }
 
 fn map_direction(keycode: Keycode) -> Option<Direction> {
@@ -88,14 +86,63 @@ fn map_direction(keycode: Keycode) -> Option<Direction> {
 
 impl Level {
     pub fn new(state: State) -> Level {
-        
         Level {state}
     }
     pub fn run(&mut self) -> Result<(), String> {
+    
+        let sdl_context = sdl2::init()?;
+        let video_subsystem = sdl_context.video()?;
+        let _image_context = sdl2::image::init(InitFlag::PNG | InitFlag::JPG)?;
+        let window = video_subsystem
+            .window(
+                "rust-sdl2 demo: Video",
+                34 * (self.state.map.width as u32),
+                34 * (self.state.map.width as u32),
+            )
+            .position_centered()
+            .build()
+            .map_err(|e| e.to_string())?;
+
+        let mut canvas = window
+            .into_canvas()
+            .software()
+            .build()
+            .map_err(|e| e.to_string())?;
+        let texture_creator = canvas.texture_creator();
         
+        let load_texture = |path| texture_creator.load_texture(Path::new(path)).unwrap();
+        
+        let textures_map = enum_map::enum_map! {
+            CaseState::Empty => None,
+            CaseState::Box => Some(load_texture("assets/box.jpg")),
+            CaseState::Wall => Some(load_texture("assets/wall.jpg")),
+        };
 
-        update(&self.state);
+        let texture_spot = load_texture("assets/spot.png");
+        let texture_box_on_spot = load_texture("assets/box_on_spot.jpg");
 
+        let textures_mario: enum_map::EnumMap<Direction, Texture> = enum_map::enum_map! {
+            Direction::Up => load_texture("assets/mario_up.gif"),
+            Direction::Down => load_texture("assets/mario_down.gif"),
+            Direction::Left => load_texture("assets/mario_left.gif"),
+            Direction::Right => load_texture("assets/mario_right.gif"),
+        };
+
+        let mut update = move |state: &State| {
+            canvas.clear();
+            render(
+                &mut canvas,
+                state,
+                &textures_map,
+                &textures_mario,
+                &texture_spot,
+                &texture_box_on_spot,
+            );
+            canvas.present();
+        };
+        
+        (update)(&self.state);
+        
         'mainloop: loop {
             for event in sdl_context.event_pump()?.poll_iter() {
                 match event {
@@ -109,16 +156,6 @@ impl Level {
                             if let Some(direction) = map_direction(keycode) {
                                     self.state.move_mario(direction);
                             }
-                            /*canvas.clear();
-                            render(
-                                &mut canvas,
-                                &self.state,
-                                &textures_map,
-                                &textures_mario,
-                                &texture_spot,
-                                &texture_box_on_spot,
-                            );
-                            canvas.present();*/
                             update(&self.state);
                         }
                     },
