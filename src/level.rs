@@ -157,6 +157,9 @@ impl Level {
                                     self.state.move_mario(direction);
                             }
                             update(&self.state);
+                            if self.state.is_solved() {
+                                return Ok(());
+                            }
                         }
                     },
                     _ => {}

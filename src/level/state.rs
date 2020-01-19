@@ -26,7 +26,7 @@ impl<T> Map<T> {
     }
 }
 
-#[derive(Clone, Copy, enum_map::Enum)]
+#[derive(Clone, Copy, enum_map::Enum, PartialEq, Eq)]
 pub enum CaseState {
     Empty,
     Box,
@@ -50,6 +50,11 @@ pub struct State {
 }
 
 impl State {
+    
+    pub fn is_solved(&self) -> bool {
+        self.spots.iter().all(|(x,y)| self.map.get(*x,*y)==Some(&CaseState::Box))
+    }
+    
     pub fn move_mario(&mut self, direction: Direction) {
         let (dx, dy) = match direction {
             Direction::Down => (0, 1),
@@ -57,7 +62,7 @@ impl State {
             Direction::Left => (-1, 0),
             Direction::Right => (1, 0),
         };
-
+        
         if let Some(case) = self.map.get(self.mario_x + dx, self.mario_y + dy) {
             match case {
                 CaseState::Wall => {}

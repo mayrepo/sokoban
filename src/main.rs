@@ -5,7 +5,7 @@ use level::state::{Map, CaseState, Direction, State};
 
 
 pub fn main() -> Result<(), String> {
-    let mut state = State {
+    let mut levels = vec![State {
         map: Map::<CaseState> {
             height: 10,
             width: 10,
@@ -15,10 +15,13 @@ pub fn main() -> Result<(), String> {
         mario_x: 0,
         mario_y: 0,
         mario_orientation: Direction::Down,
-    };
+    }];
 
-    *state.map.get_mut(1, 1).unwrap() = CaseState::Box;
-    state.spots.push((1, 2));
-
-    level::Level::new(state).run()
+    *levels[0].map.get_mut(1, 1).unwrap() = CaseState::Box;
+    levels[0].spots.push((1, 2));
+    
+    for level in levels {
+        level::Level::new(level).run()?
+    }
+    Ok(())
 }
