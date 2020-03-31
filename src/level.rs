@@ -70,6 +70,7 @@ fn render(
         .expect("error2");
 }
 
+#[derive(Clone)]
 pub struct Level {
     state: State,
 }
@@ -84,11 +85,19 @@ fn map_direction(keycode: Keycode) -> Option<Direction> {
     }
 }
 
+pub enum EndLevel {
+    Restart,
+    NextLevel,
+    PreviousLevel,
+    Exit,
+}
+
+
 impl Level {
     pub fn new(state: State) -> Level {
         Level {state}
     }
-    pub fn run(&mut self) -> Result<(), String> {
+    pub fn run(&mut self) -> Result<EndLevel, String> {
     
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
@@ -143,14 +152,26 @@ impl Level {
         
         (update)(&self.state);
         
-        'mainloop: loop {
+        loop {
             for event in sdl_context.event_pump()?.poll_iter() {
                 match event {
                     Event::Quit { .. }
                     | Event::KeyDown {
                         keycode: Option::Some(Keycode::Escape),
                         ..
-                    } => break 'mainloop,
+                    } => return Ok(EndLevel::Exit),
+                    Event::KeyDown {
+                        keycode: Option::Some(Keycode::R),
+                        ..
+                    } => return Ok(EndLevel::Restart),
+                    Event::KeyDown {
+                        keycode: Option::Some(Keycode::N),
+                        ..
+                    } => return Ok(EndLevel::NextLevel),
+                    Event::KeyDown {
+                        keycode: Option::Some(Keycode::P),
+                        ..
+                    } => return Ok(EndLevel::PreviousLevel),
                     Event::KeyUp { keycode, .. } => {
                         if let Some(keycode) = keycode {
                             if let Some(direction) = map_direction(keycode) {
@@ -158,7 +179,7 @@ impl Level {
                             }
                             update(&self.state);
                             if self.state.is_solved() {
-                                return Ok(());
+                                return Ok(EndLevel::NextLevel);
                             }
                         }
                     },
@@ -166,6 +187,5 @@ impl Level {
                 }
             }
         }
-        Ok(())
     }
 }
