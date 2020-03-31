@@ -3,6 +3,7 @@ extern crate enum_map;
 
 pub type Coordinate = i8;
 
+#[derive(Clone)]
 pub struct Map<T> {
     pub height: Coordinate,
     pub width: Coordinate,
@@ -15,7 +16,7 @@ impl<T> Map<T> {
             return None;
         }
 
-        self.map.get((y * self.width + x) as usize)
+        self.map.get(((y as usize) * (self.width as usize) + (x as usize)) as usize)
     }
     pub fn get_mut(&mut self, x: Coordinate, y: Coordinate) -> Option<&mut T> {
         if x < 0 || x >= self.width || y < 0 || y >= self.height {
@@ -41,6 +42,7 @@ pub enum Direction {
     Right,
 }
 
+#[derive(Clone)]
 pub struct State {
     pub map: Map<CaseState>,
     pub spots: Vec<(Coordinate, Coordinate)>,
